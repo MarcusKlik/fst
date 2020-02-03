@@ -34,19 +34,21 @@ inline void fst_quicksort(int* vec, int length) {
   // take center value as median estimate
   int pivot = (vec[0] + vec[pos_right]) / 2;
 
-  while (TRUE) {
+  while (true) {
+
     // iterate left until value > pivot
-    while (pos_left < pos_right && vec[pos_left] <= pivot) pos_left++;
+    while (vec[pos_left] <= pivot && pos_left != pos_right) pos_left++;
+
+    int tmp = vec[pos_left];
 
     // left swap value found, iterate right until value < pivot
-    while (pos_right > pos_left && vec[pos_right] > pivot) pos_right--;
+    while (vec[pos_right] > pivot && pos_right != pos_left) pos_right--;
 
     if (pos_left == pos_right) break;
 
     // swap values and restart
-    int tmp = vec[pos_right];
-    vec[pos_right] = vec[pos_left];
-    vec[pos_left] = tmp;
+    vec[pos_left] = vec[pos_right];
+    vec[pos_right] = tmp;
   }
 
   // pos_left == pos_right as this point
@@ -67,14 +69,103 @@ inline void fst_quicksort(int* vec, int length) {
 
   if (pos_left < (length - 2)) {
     fst_quicksort(&vec[pos_left], length - pos_left);
-  }
-
-  // swap last 2 elements if in reverse order
-  if (pos_left == (length - 2) && vec[pos_left] > vec[pos_left + 1]) {
+  } else if (pos_left == (length - 2) && vec[pos_left] > vec[pos_left + 1]) {
+    // swap last 2 elements if in reverse order
     int tmp = vec[pos_left];
     vec[pos_left] = vec[pos_left + 1];
     vec[pos_left + 1] = tmp;
   }
+}
+
+
+void fst_mergesort(int* left_p, int* right_p, int length_left, int length_right, int* res_p) {
+
+  int pos_left = 0;
+  int pos_right = 0;
+
+  // populate result vector
+  int pos = 0;
+  while (pos_left < length_left && pos_right < length_right) {
+
+    int val_left = left_p[pos_left];
+    int val_right = right_p[pos_right];
+
+    if (val_left <= val_right) {
+      res_p[pos] = val_left;
+      pos_left++;
+      pos++;
+      continue;
+    }
+
+    res_p[pos] = val_right;
+    pos_right++;
+    pos++;
+  }
+
+  // populate remainder
+  if (pos_left == length_left) {
+    while (pos_right < length_right) {
+      res_p[pos] = right_p[pos_right];
+      pos++;
+      pos_right++;
+    }
+  } else
+  {
+    while (pos_left < length_left) {
+      res_p[pos] = left_p[pos_left];
+      pos++;
+      pos_left++;
+    }
+  }
+}
+
+
+SEXP fstmergesort(SEXP int_vec_left, SEXP int_vec_right) {
+
+  int length_left = LENGTH(int_vec_left);
+  int length_right = LENGTH(int_vec_right);
+
+  int tot_size = length_left + length_right;
+
+  // create result vector
+  SEXP res_vec = PROTECT(Rf_allocVector(INTSXP, (R_xlen_t) tot_size));
+
+  // pointers
+  int* left_p = INTEGER(int_vec_left);
+  int* right_p = INTEGER(int_vec_right);
+  int* res_p = INTEGER(res_vec);
+
+  // do something here
+  fst_mergesort(left_p, right_p, length_left, length_right, res_p);
+
+  UNPROTECT(1);
+
+  return res_vec;
+}
+
+
+SEXP fstsort_combined(SEXP int_vec) {
+
+  int* vec = INTEGER(int_vec);
+  int length = LENGTH(int_vec);
+
+  if (length == 0) return int_vec;
+
+  int pos = length / 2;
+
+  // create result vector
+  SEXP res_vec = PROTECT(Rf_allocVector(INTSXP, (R_xlen_t) length));
+  int* res_p = INTEGER(res_vec);
+
+  // split in two and sort
+  fst_quicksort(vec, pos);
+  fst_quicksort(&vec[pos], length - pos);
+
+  fst_mergesort(vec, &vec[pos], pos, length - pos, res_p);
+
+  UNPROTECT(1);
+
+  return res_vec;
 }
 
 
@@ -85,7 +176,7 @@ SEXP fstsort(SEXP int_vec) {
 
   if (length == 0) return int_vec;
 
-  // split in two sorted vectors
   fst_quicksort(vec, length);
+
   return int_vec;
 }

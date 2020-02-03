@@ -28,4 +28,10 @@
 // [[Rcpp::export]]
 SEXP fstsort(SEXP int_vec);
 
+// [[Rcpp::export]]
+SEXP fstmergesort(SEXP int_vec_left, SEXP int_vec_right);
+
+// [[Rcpp::export]]
+SEXP fstsort_combined(SEXP int_vec);
+
 #endif  // FST_SORT_H
