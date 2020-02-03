@@ -59,8 +59,9 @@ inline void fst_quicksort(int* vec, int length, int pivot) {
 
     // swap values
 
-    elem_right = vec[pos_left];  // swapped
-    elem_left = vec[pos_right];
+    int tmp = elem_right;
+    elem_right = elem_left;  // swapped
+    elem_left = tmp;
 
     vec[pos_left] = elem_left;
     vec[pos_right] = elem_right;
