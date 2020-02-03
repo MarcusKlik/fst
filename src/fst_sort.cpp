@@ -26,39 +26,65 @@
 #include <Rcpp.h>
 
 
-inline void fst_quicksort(int* vec, int length) {
+inline void fst_quicksort(int* vec, int length, int pivot) {
+
+  // std::cout << "\npivot: " << pivot << "\n" << std::flush;
 
   int pos_left = 0;
   int pos_right = length - 1;
 
-  // take center value as median estimate
-  int pivot = (vec[0] + vec[pos_right]) / 2;
+  int elem_left = vec[0];
+  int elem_right = vec[pos_right];
+
+  int64_t sum_left = 0;
+  int64_t sum_right = 0;
 
   while (true) {
 
     // iterate left until value > pivot
-    while (vec[pos_left] <= pivot && pos_left != pos_right) pos_left++;
-
-    int tmp = vec[pos_left];
+    while (elem_left <= pivot && pos_left != pos_right) {
+      sum_left += elem_left;
+      // std::cout << "add sum left: " << elem_left << " (" << sum_left << ")\n" << std::flush;
+      elem_left = vec[++pos_left];
+    }
 
     // left swap value found, iterate right until value < pivot
-    while (vec[pos_right] > pivot && pos_right != pos_left) pos_right--;
+    while (elem_right > pivot && pos_right != pos_left) {
+      sum_right += elem_right;
+      // std::cout << "add sum right: " << elem_right << " (" << sum_right << ")\n" << std::flush;
+      elem_right = vec[--pos_right];
+    }
 
     if (pos_left == pos_right) break;
 
-    // swap values and restart
-    vec[pos_left] = vec[pos_right];
-    vec[pos_right] = tmp;
+    // swap values
+
+    elem_right = vec[pos_left];  // swapped
+    elem_left = vec[pos_right];
+
+    vec[pos_left] = elem_left;
+    vec[pos_right] = elem_right;
   }
 
   // pos_left == pos_right as this point
 
   if (vec[pos_left] < pivot) {
+    sum_left += vec[pos_left];
+    // std::cout << "add sum left: " << vec[pos_left] << " (" << sum_left << ")\n" << std::flush;
     pos_left++;
+  } else
+  {
+    sum_right += vec[pos_left];
+    // std::cout << "add sum right: " << vec[pos_left] << " (" << sum_right << ")\n" << std::flush;
   }
 
+  // do not use elem_left after this point (as pos_left is possibly updated)
+
   if (pos_left > 2) {
-    fst_quicksort(vec, pos_left);
+    int piv = (int) (sum_left / (int64_t) (pos_left));
+    // int piv = (vec[0] + vec[pos_left - 1]) / 2;
+    // std::cout << "piv: " << piv << " piv new: " << sum_left / pos_left << "\n" << std::flush;
+    fst_quicksort(vec, pos_left, piv);
   }
   else if (pos_left == 2 && vec[0] > vec[1]) {
   // swap first 2 elements
@@ -68,7 +94,10 @@ inline void fst_quicksort(int* vec, int length) {
   }
 
   if (pos_left < (length - 2)) {
-    fst_quicksort(&vec[pos_left], length - pos_left);
+    int piv = (int) (sum_right / (int64_t)(length - pos_left));
+    // int piv = (vec[pos_left] + vec[length - 1]) / 2;
+    // std::cout << "piv: " << piv << " piv new: " << sum_right / (length - pos_left) << "\n" << std::flush;
+    fst_quicksort(&vec[pos_left], length - pos_left, piv);
   } else if (pos_left == (length - 2) && vec[pos_left] > vec[pos_left + 1]) {
     // swap last 2 elements if in reverse order
     int tmp = vec[pos_left];
@@ -158,8 +187,11 @@ SEXP fstsort_combined(SEXP int_vec) {
   int* res_p = INTEGER(res_vec);
 
   // split in two and sort
-  fst_quicksort(vec, pos);
-  fst_quicksort(&vec[pos], length - pos);
+  int pivot = (vec[0] + vec[pos - 1]) / 2;
+  fst_quicksort(vec, pos, pivot);
+
+  pivot = (vec[pos] + vec[length - 1]) / 2;
+  fst_quicksort(&vec[pos], length - pos, pivot);
 
   fst_mergesort(vec, &vec[pos], pos, length - pos, res_p);
 
@@ -176,7 +208,9 @@ SEXP fstsort(SEXP int_vec) {
 
   if (length == 0) return int_vec;
 
-  fst_quicksort(vec, length);
+  // take center value as median estimate
+  int pivot = (vec[0] + vec[length - 1]) / 2;
+  fst_quicksort(vec, length, pivot);
 
   return int_vec;
 }
