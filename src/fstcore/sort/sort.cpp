@@ -214,14 +214,14 @@ void fst_radix_sort(int* vec, int length, int* buffer)
   index4[0] = 0;
 
   // test for single populated bin
-  int64_t sqr1 = cum_pos1 * cum_pos1;
-  int64_t sqr2 = cum_pos2 * cum_pos2;
-  int64_t sqr3 = cum_pos3 * cum_pos3;
-  int64_t sqr4 = cum_pos4 * cum_pos4;
+  int64_t sqr1 = static_cast<int64_t>(cum_pos1) * static_cast<int64_t>(cum_pos1);
+  int64_t sqr2 = static_cast<int64_t>(cum_pos2) * static_cast<int64_t>(cum_pos2);
+  int64_t sqr3 = static_cast<int64_t>(cum_pos3) * static_cast<int64_t>(cum_pos3);
+  int64_t sqr4 = static_cast<int64_t>(cum_pos4) * static_cast<int64_t>(cum_pos4);
 
   for (int ind = 1; ind < 256; ++ind) {
 
-    int old_val = index1[ind];
+    int64_t old_val = index1[ind];
     sqr1 += old_val * old_val;
     index1[ind] = cum_pos1;
     cum_pos1 += old_val;
@@ -244,7 +244,7 @@ void fst_radix_sort(int* vec, int length, int* buffer)
 
   // phase 1: sort on byte 1
 
-  int64_t single_bin_size = (int64_t) length * (int64_t) length;
+  const int64_t single_bin_size = static_cast<int64_t>(length) * static_cast<int64_t>(length);
 
   if (sqr1 != single_bin_size) {
     for (int pos = 0; pos < length; ++pos) {
