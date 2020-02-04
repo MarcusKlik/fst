@@ -18,6 +18,7 @@ extern SEXP _fst_fststore(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _fst_getnrofthreads();
 extern SEXP _fst_hasopenmp();
 extern SEXP _fst_fstsort(SEXP);
+extern SEXP _fst_fstsort_radix(SEXP);
 extern SEXP _fst_fstmergesort(SEXP, SEXP);
 extern SEXP _fst_fstsort_combined(SEXP);
 extern SEXP _fst_fstlib_version();
@@ -33,8 +34,9 @@ static const R_CallMethodDef CallEntries[] = {
   {"_fst_fstmetadata",        (DL_FUNC) &_fst_fstmetadata,        1},
   {"_fst_fstretrieve",        (DL_FUNC) &_fst_fstretrieve,        4},
   {"_fst_fstsort",            (DL_FUNC) &_fst_fstsort,            1},
+  {"_fst_fstsort_radix",      (DL_FUNC) &_fst_fstsort_radix,      1},
   {"_fst_fstmergesort",       (DL_FUNC) &_fst_fstmergesort,       2},
-  {"_fst_fstsort_combined",   (DL_FUNC) &_fst_fstsort_combined,       1},
+  {"_fst_fstsort_combined",   (DL_FUNC) &_fst_fstsort_combined,   1},
   {"_fst_fststore",           (DL_FUNC) &_fst_fststore,           4},
   {"_fst_getnrofthreads",     (DL_FUNC) &_fst_getnrofthreads,     0},
   {"_fst_hasopenmp",          (DL_FUNC) &_fst_hasopenmp,          0},

@@ -33,31 +33,20 @@ inline void fst_quicksort(int* vec, int length, int pivot) {
   int pos_left = 0;
   int pos_right = length - 1;
 
-  int elem_left = vec[0];
-  int elem_right = vec[pos_right];
-
   while (true) {
 
     // iterate left until value > pivot
-    while (elem_left <= pivot && pos_left != pos_right) {
-      elem_left = vec[++pos_left];
-    }
+    while (vec[pos_left] <= pivot && pos_left != pos_right) ++pos_left;
 
     // left swap value found, iterate right until value < pivot
-    while (elem_right > pivot && pos_right != pos_left) {
-      elem_right = vec[--pos_right];
-    }
+    while (vec[pos_right] > pivot && pos_right != pos_left) --pos_right;
 
     if (pos_left == pos_right) break;
 
     // swap values
-
-    int tmp = elem_right;
-    elem_right = elem_left;  // swapped
-    elem_left = tmp;
-
-    vec[pos_left] = elem_left;
-    vec[pos_right] = elem_right;
+    int tmp = vec[pos_right];
+    vec[pos_right] = vec[pos_left];
+    vec[pos_left] = tmp;
   }
 
   // pos_left == pos_right as this point
@@ -69,7 +58,7 @@ inline void fst_quicksort(int* vec, int length, int pivot) {
   // do not use elem_left after this point (as pos_left is possibly updated)
 
   if (pos_left > 2) {
-    int piv = (vec[0] + vec[pos_left - 1]) / 2;
+    int piv = (vec[0] + vec[pos_left / 2] + vec[pos_left - 1]) / 3;
     fst_quicksort(vec, pos_left, piv);
   }
   else if (pos_left == 2 && vec[0] > vec[1]) {
@@ -80,8 +69,7 @@ inline void fst_quicksort(int* vec, int length, int pivot) {
   }
 
   if (pos_left < (length - 2)) {
-    // int piv = (int) (sum_right / (int64_t)(length - pos_left));
-    int piv = (vec[pos_left] + vec[length - 1]) / 2;
+    int piv = (vec[pos_left] + vec[(length + pos_left) / 2] + vec[length - 1]) / 3;
     fst_quicksort(&vec[pos_left], length - pos_left, piv);
   } else if (pos_left == (length - 2) && vec[pos_left] > vec[pos_left + 1]) {
     // swap last 2 elements if in reverse order
@@ -186,14 +174,154 @@ SEXP fstsort_combined(SEXP int_vec) {
 }
 
 
+void fst_radixsort(int* vec, int length, int* buffer)
+{
+  int index[256];
+
+  // phase 1: sort on lower byte
+
+  // initialize
+  for (int ind = 0; ind < 256; ++ind) index[ind] = 0;
+
+  // count each occurence
+  for (int pos = 0; pos < length; ++pos) {
+    index[vec[pos] & 255]++;
+  }
+
+  // cumulative positions
+  int cum_pos = index[0];
+  index[0] = 0;
+  for (int ind = 1; ind < 256; ++ind) {
+    int old_val = index[ind];
+    index[ind] = cum_pos;
+    cum_pos += old_val;
+  }
+
+  // fill buffer
+  // count each occurence
+  for (int pos = 0; pos < length; ++pos) {
+    int value = vec[pos];
+    int target_pos = index[value & 255]++;
+    buffer[target_pos] = value;
+  }
+
+  // phase 2: sort on byte 2
+
+  // initialize
+  for (int ind = 0; ind < 256; ++ind) index[ind] = 0;
+
+  // count each occurence
+  for (int pos = 0; pos < length; ++pos) {
+    index[(buffer[pos] >> 8) & 255]++;
+  }
+
+  // cumulative positions
+  cum_pos = index[0];
+  index[0] = 0;
+  for (int ind = 1; ind < 256; ++ind) {
+    int old_val = index[ind];
+    index[ind] = cum_pos;
+    cum_pos += old_val;
+  }
+
+  // fill buffer
+  // count each occurence
+  for (int pos = 0; pos < length; ++pos) {
+    int value = buffer[pos];
+    int target_pos = index[(value >> 8) & 255]++;
+    vec[target_pos] = value;
+  }
+
+  // phase 3: sort on byte 3
+
+  // initialize
+  for (int ind = 0; ind < 256; ++ind) index[ind] = 0;
+
+  // count each occurence
+  for (int pos = 0; pos < length; ++pos) {
+    index[(vec[pos] >> 16) & 255]++;
+  }
+
+  // cumulative positions
+  cum_pos = index[0];
+  index[0] = 0;
+  for (int ind = 1; ind < 256; ++ind) {
+    int old_val = index[ind];
+    index[ind] = cum_pos;
+    cum_pos += old_val;
+  }
+
+  // fill vec
+  // count each occurence
+  for (int pos = 0; pos < length; ++pos) {
+    int value = vec[pos];
+    int target_pos = index[(value >> 16) & 255]++;
+    buffer[target_pos] = value;
+  }
+
+  // phase 4: sort on byte 3
+
+  // initialize
+  for (int ind = 0; ind < 256; ++ind) index[ind] = 0;
+
+  // count each occurence
+  for (int pos = 0; pos < length; ++pos) {
+    index[(buffer[pos] >> 24) & 255]++;
+  }
+
+  // cumulative positions
+  cum_pos = index[0];
+  index[0] = 0;
+  for (int ind = 1; ind < 256; ++ind) {
+    int old_val = index[ind];
+    index[ind] = cum_pos;
+    cum_pos += old_val;
+  }
+
+  // fill buffer
+  // count each occurence
+  for (int pos = 0; pos < length; ++pos) {
+    int value = buffer[pos];
+    int target_pos = index[(value >> 24) & 255]++;
+    vec[target_pos] = value;
+  }
+
+}
+
+SEXP fstsort_radix(SEXP int_vec) {
+
+  int* vec = INTEGER(int_vec);
+  int length = LENGTH(int_vec);
+
+  SEXP buffer_vec = PROTECT(Rf_allocVector(INTSXP, length));
+  int* buffer = INTEGER(buffer_vec);
+
+  fst_radixsort(vec, length, buffer);
+
+  UNPROTECT(1);
+
+  return int_vec;
+}
+
+
 SEXP fstsort(SEXP int_vec) {
 
   int* vec = INTEGER(int_vec);
   int length = LENGTH(int_vec);
 
-  if (length == 0) return int_vec;
+  if (length < 3) {
+    if (length == 2) {
+      if (vec[0] > vec[1]) {
+        int tmp = vec[0];
+        vec[0] = vec[1];
+        vec[1] = tmp;
+      }
+    }
+    return int_vec;
+  }
 
   // take center value as median estimate
+  int piv = (vec[0] + vec[(length - 1) / 2] + vec[length - 1]) / 3;
   int pivot = (vec[0] + vec[length - 1]) / 2;
   fst_quicksort(vec, length, pivot);
 

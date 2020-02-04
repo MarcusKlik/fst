@@ -25,11 +25,18 @@
 #ifndef FST_SORT_H
 #define FST_SORT_H
 
+
 // [[Rcpp::export]]
 SEXP fstsort(SEXP int_vec);
 
+
+// [[Rcpp::export]]
+SEXP fstsort_radix(SEXP int_vec);
+
+
 // [[Rcpp::export]]
 SEXP fstmergesort(SEXP int_vec_left, SEXP int_vec_right);
+
 
 // [[Rcpp::export]]
 SEXP fstsort_combined(SEXP int_vec);

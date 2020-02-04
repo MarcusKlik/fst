@@ -33,6 +33,10 @@ fstsort <- function(int_vec) {
     .Call(`_fst_fstsort`, int_vec)
 }
 
+fstsort_radix <- function(int_vec) {
+    .Call(`_fst_fstsort_radix`, int_vec)
+}
+
 fstmergesort <- function(int_vec_left, int_vec_right) {
     .Call(`_fst_fstmergesort`, int_vec_left, int_vec_right)
 }

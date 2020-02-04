@@ -103,6 +103,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// fstsort_radix
+SEXP fstsort_radix(SEXP int_vec);
+RcppExport SEXP _fst_fstsort_radix(SEXP int_vecSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type int_vec(int_vecSEXP);
+    rcpp_result_gen = Rcpp::wrap(fstsort_radix(int_vec));
+    return rcpp_result_gen;
+END_RCPP
+}
 // fstmergesort
 SEXP fstmergesort(SEXP int_vec_left, SEXP int_vec_right);
 RcppExport SEXP _fst_fstmergesort(SEXP int_vec_leftSEXP, SEXP int_vec_rightSEXP) {
