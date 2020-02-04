@@ -30,8 +30,6 @@
 
 void fst_quick_sort(int* vec, int length, int pivot) {
 
-  // std::cout << "\npivot: " << pivot << "\n" << std::flush;
-
   int pos_left = 0;
   int pos_right = length - 1;
 
@@ -46,7 +44,7 @@ void fst_quick_sort(int* vec, int length, int pivot) {
     if (pos_left == pos_right) break;
 
     // swap values
-    int tmp = vec[pos_right];
+    const int tmp = vec[pos_right];
     vec[pos_right] = vec[pos_left];
     vec[pos_left] = tmp;
   }
@@ -60,22 +58,22 @@ void fst_quick_sort(int* vec, int length, int pivot) {
   // do not use elem_left after this point (as pos_left is possibly updated)
 
   if (pos_left > 2) {
-    int piv = (vec[0] + vec[pos_left / 2] + vec[pos_left - 1]) / 3;
+    const int piv = (vec[0] + vec[pos_left / 2] + vec[pos_left - 1]) / 3;
     fst_quick_sort(vec, pos_left, piv);
   }
   else if (pos_left == 2 && vec[0] > vec[1]) {
     // swap first 2 elements
-    int tmp = vec[1];
+    const int tmp = vec[1];
     vec[1] = vec[0];
     vec[0] = tmp;
   }
 
   if (pos_left < (length - 2)) {
-    int piv = (vec[pos_left] + vec[(length + pos_left) / 2] + vec[length - 1]) / 3;
+    const int piv = (vec[pos_left] + vec[(length + pos_left) / 2] + vec[length - 1]) / 3;
     fst_quick_sort(&vec[pos_left], length - pos_left, piv);
   } else if (pos_left == (length - 2) && vec[pos_left] > vec[pos_left + 1]) {
     // swap last 2 elements if in reverse order
-    int tmp = vec[pos_left];
+    const int tmp = vec[pos_left];
     vec[pos_left] = vec[pos_left + 1];
     vec[pos_left + 1] = tmp;
   }
@@ -91,8 +89,8 @@ void fst_merge_sort(const int* left_p, const int* right_p, int length_left, int 
   int pos = 0;
   while (pos_left < length_left && pos_right < length_right) {
 
-    int val_left = left_p[pos_left];
-    int val_right = right_p[pos_right];
+    const int val_left = left_p[pos_left];
+    const int val_right = right_p[pos_right];
 
     if (val_left <= val_right) {
       res_p[pos] = val_left;
@@ -142,10 +140,10 @@ void fst_radix_sort(int* vec, int length, int* buffer)
   }
 
   // count each occurence
-  int batch_length = length / 8;
+  const int batch_length = length / 8;
 
   for (int pos = 0; pos < batch_length; ++pos) {
-    int ind = 8 * pos;
+    const int ind = 8 * pos;
 
     int val = vec[ind];
     ++index1[val & 255];
