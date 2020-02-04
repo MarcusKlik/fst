@@ -176,168 +176,145 @@ SEXP fstsort_combined(SEXP int_vec) {
 
 void fst_radixsort(int* vec, int length, int* buffer)
 {
-  int index[256];
+  int index1[256];
+  int index2[256];
+  int index3[256];
+  int index4[256];
 
   // phase 1: sort on lower byte
 
   // initialize
-  for (int ind = 0; ind < 256; ++ind) index[ind] = 0;
+  for (int ind = 0; ind < 256; ++ind) {
+    index1[ind] = 0;
+    index2[ind] = 0;
+    index3[ind] = 0;
+    index4[ind] = 0;
+  }
 
   // count each occurence
   int batch_length = length / 8;
 
   for (int pos = 0; pos < batch_length; ++pos) {
     int ind = 8 * pos;
-    ++index[vec[ind] & 255];
-    ++index[vec[ind + 1] & 255];
-    ++index[vec[ind + 2] & 255];
-    ++index[vec[ind + 3] & 255];
-    ++index[vec[ind + 4] & 255];
-    ++index[vec[ind + 5] & 255];
-    ++index[vec[ind + 6] & 255];
-    ++index[vec[ind + 7] & 255];
+
+    int val = vec[ind];
+    ++index1[val & 255];
+    ++index2[(val >> 8) & 255];
+    ++index3[(val >> 16) & 255];
+    ++index4[((val >> 24) & 255) ^ 128];
+
+    val = vec[ind + 1];
+    ++index1[  val        & 255];
+    ++index2[( val >> 8 )& 255];
+    ++index3[( val >> 16) & 255];
+    ++index4[((val >> 24) & 255) ^ 128];
+
+    val = vec[ind + 2];
+    ++index1[  val        & 255];
+    ++index2[( val >> 8 )& 255];
+    ++index3[( val >> 16) & 255];
+    ++index4[((val >> 24) & 255) ^ 128];
+
+    val = vec[ind + 3];
+    ++index1[  val        & 255];
+    ++index2[( val >> 8 )& 255];
+    ++index3[( val >> 16) & 255];
+    ++index4[((val >> 24) & 255) ^ 128];
+
+    val = vec[ind + 4];
+    ++index1[  val        & 255];
+    ++index2[( val >> 8 )& 255];
+    ++index3[( val >> 16) & 255];
+    ++index4[((val >> 24) & 255) ^ 128];
+
+    val = vec[ind + 5];
+    ++index1[  val        & 255];
+    ++index2[( val >> 8 )& 255];
+    ++index3[( val >> 16) & 255];
+    ++index4[((val >> 24) & 255) ^ 128];
+
+    val = vec[ind + 6];
+    ++index1[  val        & 255];
+    ++index2[( val >> 8 )& 255];
+    ++index3[( val >> 16) & 255];
+    ++index4[((val >> 24) & 255) ^ 128];
+
+    val = vec[ind + 7];
+    ++index1[  val        & 255];
+    ++index2[( val >> 8 )& 255];
+    ++index3[( val >> 16) & 255];
+    ++index4[((val >> 24) & 255) ^ 128];
   }
 
   for (int pos = 8 * batch_length; pos < length; ++pos) {
-    ++index[vec[pos] & 255];
+    ++index1[  vec[pos]        & 255];
+    ++index2[( vec[pos] >> 8)  & 255];
+    ++index3[( vec[pos] >> 16) & 255];
+    ++index4[((vec[pos] >> 24) & 255) ^ 128];
   }
 
 
   // cumulative positions
-  int cum_pos = index[0];
-  index[0] = 0;
+  int cum_pos1 = index1[0];
+  int cum_pos2 = index2[0];
+  int cum_pos3 = index3[0];
+  int cum_pos4 = index4[0];
+
+  index1[0] = 0;
+  index2[0] = 0;
+  index3[0] = 0;
+  index4[0] = 0;
+
   for (int ind = 1; ind < 256; ++ind) {
-    int old_val = index[ind];
-    index[ind] = cum_pos;
-    cum_pos += old_val;
+
+    int old_val = index1[ind];
+    index1[ind] = cum_pos1;
+    cum_pos1 += old_val;
+
+    old_val = index2[ind];
+    index2[ind] = cum_pos2;
+    cum_pos2 += old_val;
+
+    old_val = index3[ind];
+    index3[ind] = cum_pos3;
+    cum_pos3 += old_val;
+
+    old_val = index4[ind];
+    index4[ind] = cum_pos4;
+    cum_pos4 += old_val;
   }
 
-  // fill buffer
-  // count each occurence
+  // phase 2: sort on byte 1
+
   for (int pos = 0; pos < length; ++pos) {
     int value = vec[pos];
-    int target_pos = index[value & 255]++;
+    int target_pos = index1[value & 255]++;
     buffer[target_pos] = value;
   }
 
   // phase 2: sort on byte 2
 
-  // initialize
-  for (int ind = 0; ind < 256; ++ind) index[ind] = 0;
-
-  // count each occurence
-  for (int pos = 0; pos < batch_length; ++pos) {
-    int ind = 8 * pos;
-    ++index[(buffer[ind] >> 8) & 255];
-    ++index[(buffer[ind + 1] >> 8) & 255];
-    ++index[(buffer[ind + 2] >> 8) & 255];
-    ++index[(buffer[ind + 3] >> 8) & 255];
-    ++index[(buffer[ind + 4] >> 8) & 255];
-    ++index[(buffer[ind + 5] >> 8) & 255];
-    ++index[(buffer[ind + 6] >> 8) & 255];
-    ++index[(buffer[ind + 7] >> 8) & 255];
-  }
-
-  for (int pos = 8 * batch_length; pos < length; ++pos) {
-    ++index[(buffer[pos] >> 8) & 255];
-  }
-
-  // cumulative positions
-  cum_pos = index[0];
-  index[0] = 0;
-  for (int ind = 1; ind < 256; ++ind) {
-    int old_val = index[ind];
-    index[ind] = cum_pos;
-    cum_pos += old_val;
-  }
-
-  // fill buffer
-  // count each occurence
   for (int pos = 0; pos < length; ++pos) {
     int value = buffer[pos];
-    int target_pos = index[(value >> 8) & 255]++;
+    int target_pos = index2[(value >> 8) & 255]++;
     vec[target_pos] = value;
   }
 
   // phase 3: sort on byte 3
 
-  // initialize
-  for (int ind = 0; ind < 256; ++ind) index[ind] = 0;
-
-  // count each occurence
-  for (int pos = 0; pos < batch_length; ++pos) {
-    int ind = 8 * pos;
-    ++index[(vec[ind] >> 16) & 255];
-    ++index[(vec[ind + 1] >> 16) & 255];
-    ++index[(vec[ind + 2] >> 16) & 255];
-    ++index[(vec[ind + 3] >> 16) & 255];
-    ++index[(vec[ind + 4] >> 16) & 255];
-    ++index[(vec[ind + 5] >> 16) & 255];
-    ++index[(vec[ind + 6] >> 16) & 255];
-    ++index[(vec[ind + 7] >> 16) & 255];
-  }
-
-  for (int pos = 8 * batch_length; pos < length; ++pos) {
-    ++index[(vec[pos] >> 16) & 255];
-  }
-
-  // cumulative positions
-  cum_pos = index[0];
-  index[0] = 0;
-  for (int ind = 1; ind < 256; ++ind) {
-    int old_val = index[ind];
-    index[ind] = cum_pos;
-    cum_pos += old_val;
-  }
-
-  // fill vec
-  // count each occurence
   for (int pos = 0; pos < length; ++pos) {
     int value = vec[pos];
-    int target_pos = index[(value >> 16) & 255]++;
+    int target_pos = index3[(value >> 16) & 255]++;
     buffer[target_pos] = value;
   }
 
   // phase 4: sort on byte 3
 
-  // initialize
-  for (int ind = 0; ind < 256; ++ind) index[ind] = 0;
-
-  // count each occurence
-  for (int pos = 0; pos < batch_length; ++pos) {
-    int ind = 8 * pos;
-    ++index[((buffer[ind] >> 24) & 255) ^ 128];
-    ++index[((buffer[ind + 1] >> 24) & 255) ^ 128];
-    ++index[((buffer[ind + 2] >> 24) & 255) ^ 128];
-    ++index[((buffer[ind + 3] >> 24) & 255) ^ 128];
-    ++index[((buffer[ind + 4] >> 24) & 255) ^ 128];
-    ++index[((buffer[ind + 5] >> 24) & 255) ^ 128];
-    ++index[((buffer[ind + 6] >> 24) & 255) ^ 128];
-    ++index[((buffer[ind + 7] >> 24) & 255) ^ 128];
-  }
-
-  for (int pos = 8 * batch_length; pos < length; ++pos) {
-    ++index[((buffer[pos] >> 24) & 255) ^ 128];
-  }
-
-
-  // cumulative positions
-  cum_pos = index[0];
-  index[0] = 0;
-  for (int ind = 1; ind < 256; ++ind) {
-    int old_val = index[ind];
-    index[ind] = cum_pos;
-    cum_pos += old_val;
-  }
-
-  // fill buffer
-  // count each occurence
   for (int pos = 0; pos < length; ++pos) {
     int value = buffer[pos];
-    int target_pos = index[((value >> 24) & 255) ^ 128]++;
+    int target_pos = index4[((value >> 24) & 255) ^ 128]++;
     vec[target_pos] = value;
   }
-
 }
 
 SEXP fstsort_radix(SEXP int_vec) {
