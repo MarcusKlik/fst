@@ -248,8 +248,8 @@ void fst_radix_sort(int* vec, int length, int* buffer)
 
   if (sqr1 != single_bin_size) {
     for (int pos = 0; pos < length; ++pos) {
-      int value = vec[pos];
-      int target_pos = index1[value & 255]++;
+      const int value = vec[pos];
+      const int target_pos = index1[value & 255]++;
       buffer[target_pos] = value;
     }
   } else {  // a single populated bin
@@ -260,8 +260,8 @@ void fst_radix_sort(int* vec, int length, int* buffer)
 
   if (sqr2 != single_bin_size) {
     for (int pos = 0; pos < length; ++pos) {
-      int value = buffer[pos];
-      int target_pos = index2[(value >> 8) & 255]++;
+      const int value = buffer[pos];
+      const int target_pos = index2[(value >> 8) & 255]++;
       vec[target_pos] = value;
     }
   } else {  // a single populated bin
@@ -272,8 +272,8 @@ void fst_radix_sort(int* vec, int length, int* buffer)
 
   if (sqr3 != single_bin_size) {
     for (int pos = 0; pos < length; ++pos) {
-      int value = vec[pos];
-      int target_pos = index3[(value >> 16) & 255]++;
+      const int value = vec[pos];
+      const int target_pos = index3[(value >> 16) & 255]++;
       buffer[target_pos] = value;
     }
   } else {  // a single populated bin
@@ -284,8 +284,8 @@ void fst_radix_sort(int* vec, int length, int* buffer)
 
   if (sqr4 != single_bin_size) {
     for (int pos = 0; pos < length; ++pos) {
-      int value = buffer[pos];
-      int target_pos = index4[((value >> 24) & 255) ^ 128]++;
+      const int value = buffer[pos];
+      const int target_pos = index4[((value >> 24) & 255) ^ 128]++;
       vec[target_pos] = value;
     }
   } else {  // a single populated bin

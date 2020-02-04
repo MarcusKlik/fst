@@ -4,14 +4,18 @@
 \alias{sort_fst}
 \title{Sort integer vector}
 \usage{
-sort_fst(int_vec)
+sort_fst(int_vec, method = "radix")
 }
 \arguments{
 \item{int_vec}{integer vector to be sorted}
+
+\item{method}{character string specifying the algorithm used. Valid methods are
+'quick' for quicksort and 'radix' for radix sort.}
 }
 \value{
 sorted vector
 }
 \description{
-Sort integer vector
+Fast in-place sorting of an integer vector. Uses multithreading to increase sorting
+speed.
 }

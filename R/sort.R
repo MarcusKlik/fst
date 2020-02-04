@@ -23,10 +23,22 @@
 
 #' Sort integer vector
 #'
+#' Fast in-place sorting of an integer vector. Uses multithreading to increase sorting
+#' speed.
+#'
 #' @param int_vec integer vector to be sorted
+#' @param method character string specifying the algorithm used. Valid methods are
+#' 'quick' for quicksort and 'radix' for radix sort.
 #'
 #' @return sorted vector
 #' @export
-sort_fst <- function(int_vec) {
-  fstsort(int_vec)
+sort_fst <- function(int_vec, method = "radix") {
+
+  if (method == "radix") {
+    fstsort_radix(int_vec)
+  } else if (method == "quick") {
+    fstsort(int_vec)
+  } else {
+    stop("please select a valid sorting method, allowed values are 'radix' and 'quick'")
+  }
 }
