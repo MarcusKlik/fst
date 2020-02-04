@@ -25,101 +25,7 @@
 #include <Rcpp.h>
 #include <Rcpp.h>
 
-
-inline void fst_quicksort(int* vec, int length, int pivot) {
-
-  // std::cout << "\npivot: " << pivot << "\n" << std::flush;
-
-  int pos_left = 0;
-  int pos_right = length - 1;
-
-  while (true) {
-
-    // iterate left until value > pivot
-    while (vec[pos_left] <= pivot && pos_left != pos_right) ++pos_left;
-
-    // left swap value found, iterate right until value < pivot
-    while (vec[pos_right] > pivot && pos_right != pos_left) --pos_right;
-
-    if (pos_left == pos_right) break;
-
-    // swap values
-    int tmp = vec[pos_right];
-    vec[pos_right] = vec[pos_left];
-    vec[pos_left] = tmp;
-  }
-
-  // pos_left == pos_right as this point
-
-  if (vec[pos_left] < pivot) {
-    pos_left++;
-  }
-
-  // do not use elem_left after this point (as pos_left is possibly updated)
-
-  if (pos_left > 2) {
-    int piv = (vec[0] + vec[pos_left / 2] + vec[pos_left - 1]) / 3;
-    fst_quicksort(vec, pos_left, piv);
-  }
-  else if (pos_left == 2 && vec[0] > vec[1]) {
-  // swap first 2 elements
-    int tmp = vec[1];
-    vec[1] = vec[0];
-    vec[0] = tmp;
-  }
-
-  if (pos_left < (length - 2)) {
-    int piv = (vec[pos_left] + vec[(length + pos_left) / 2] + vec[length - 1]) / 3;
-    fst_quicksort(&vec[pos_left], length - pos_left, piv);
-  } else if (pos_left == (length - 2) && vec[pos_left] > vec[pos_left + 1]) {
-    // swap last 2 elements if in reverse order
-    int tmp = vec[pos_left];
-    vec[pos_left] = vec[pos_left + 1];
-    vec[pos_left + 1] = tmp;
-  }
-}
-
-
-void fst_mergesort(int* left_p, int* right_p, int length_left, int length_right, int* res_p) {
-
-  int pos_left = 0;
-  int pos_right = 0;
-
-  // populate result vector
-  int pos = 0;
-  while (pos_left < length_left && pos_right < length_right) {
-
-    int val_left = left_p[pos_left];
-    int val_right = right_p[pos_right];
-
-    if (val_left <= val_right) {
-      res_p[pos] = val_left;
-      pos_left++;
-      pos++;
-      continue;
-    }
-
-    res_p[pos] = val_right;
-    pos_right++;
-    pos++;
-  }
-
-  // populate remainder
-  if (pos_left == length_left) {
-    while (pos_right < length_right) {
-      res_p[pos] = right_p[pos_right];
-      pos++;
-      pos_right++;
-    }
-  } else
-  {
-    while (pos_left < length_left) {
-      res_p[pos] = left_p[pos_left];
-      pos++;
-      pos_left++;
-    }
-  }
-}
+#include <sort/sort.h>
 
 
 SEXP fstmergesort(SEXP int_vec_left, SEXP int_vec_right) {
@@ -138,7 +44,7 @@ SEXP fstmergesort(SEXP int_vec_left, SEXP int_vec_right) {
   int* res_p = INTEGER(res_vec);
 
   // do something here
-  fst_mergesort(left_p, right_p, length_left, length_right, res_p);
+  fst_merge_sort(left_p, right_p, length_left, length_right, res_p);
 
   UNPROTECT(1);
 
@@ -161,189 +67,18 @@ SEXP fstsort_combined(SEXP int_vec) {
 
   // split in two and sort
   int pivot = (vec[0] + vec[pos - 1]) / 2;
-  fst_quicksort(vec, pos, pivot);
+  fst_quick_sort(vec, pos, pivot);
 
   pivot = (vec[pos] + vec[length - 1]) / 2;
-  fst_quicksort(&vec[pos], length - pos, pivot);
+  fst_quick_sort(&vec[pos], length - pos, pivot);
 
-  fst_mergesort(vec, &vec[pos], pos, length - pos, res_p);
+  fst_merge_sort(vec, &vec[pos], pos, length - pos, res_p);
 
   UNPROTECT(1);
 
   return res_vec;
 }
 
-
-void fst_radixsort(int* vec, int length, int* buffer)
-{
-  int index1[256];
-  int index2[256];
-  int index3[256];
-  int index4[256];
-
-  // phase 1: sort on lower byte
-
-  // initialize
-  for (int ind = 0; ind < 256; ++ind) {
-    index1[ind] = 0;
-    index2[ind] = 0;
-    index3[ind] = 0;
-    index4[ind] = 0;
-  }
-
-  // count each occurence
-  int batch_length = length / 8;
-
-  for (int pos = 0; pos < batch_length; ++pos) {
-    int ind = 8 * pos;
-
-    int val = vec[ind];
-    ++index1[val & 255];
-    ++index2[(val >> 8) & 255];
-    ++index3[(val >> 16) & 255];
-    ++index4[((val >> 24) & 255) ^ 128];
-
-    val = vec[ind + 1];
-    ++index1[  val        & 255];
-    ++index2[( val >> 8 )& 255];
-    ++index3[( val >> 16) & 255];
-    ++index4[((val >> 24) & 255) ^ 128];
-
-    val = vec[ind + 2];
-    ++index1[  val        & 255];
-    ++index2[( val >> 8 )& 255];
-    ++index3[( val >> 16) & 255];
-    ++index4[((val >> 24) & 255) ^ 128];
-
-    val = vec[ind + 3];
-    ++index1[  val        & 255];
-    ++index2[( val >> 8 )& 255];
-    ++index3[( val >> 16) & 255];
-    ++index4[((val >> 24) & 255) ^ 128];
-
-    val = vec[ind + 4];
-    ++index1[  val        & 255];
-    ++index2[( val >> 8 )& 255];
-    ++index3[( val >> 16) & 255];
-    ++index4[((val >> 24) & 255) ^ 128];
-
-    val = vec[ind + 5];
-    ++index1[  val        & 255];
-    ++index2[( val >> 8 )& 255];
-    ++index3[( val >> 16) & 255];
-    ++index4[((val >> 24) & 255) ^ 128];
-
-    val = vec[ind + 6];
-    ++index1[  val        & 255];
-    ++index2[( val >> 8 )& 255];
-    ++index3[( val >> 16) & 255];
-    ++index4[((val >> 24) & 255) ^ 128];
-
-    val = vec[ind + 7];
-    ++index1[  val        & 255];
-    ++index2[( val >> 8 )& 255];
-    ++index3[( val >> 16) & 255];
-    ++index4[((val >> 24) & 255) ^ 128];
-  }
-
-  for (int pos = 8 * batch_length; pos < length; ++pos) {
-    ++index1[  vec[pos]        & 255];
-    ++index2[( vec[pos] >> 8)  & 255];
-    ++index3[( vec[pos] >> 16) & 255];
-    ++index4[((vec[pos] >> 24) & 255) ^ 128];
-  }
-
-
-  // cumulative positions
-  int cum_pos1 = index1[0];
-  int cum_pos2 = index2[0];
-  int cum_pos3 = index3[0];
-  int cum_pos4 = index4[0];
-
-  index1[0] = 0;
-  index2[0] = 0;
-  index3[0] = 0;
-  index4[0] = 0;
-
-  // test for single populated bin
-  int64_t sqr1 = cum_pos1 * cum_pos1;
-  int64_t sqr2 = cum_pos2 * cum_pos2;
-  int64_t sqr3 = cum_pos3 * cum_pos3;
-  int64_t sqr4 = cum_pos4 * cum_pos4;
-
-  for (int ind = 1; ind < 256; ++ind) {
-
-    int old_val = index1[ind];
-    sqr1 += old_val * old_val;
-    index1[ind] = cum_pos1;
-    cum_pos1 += old_val;
-
-    old_val = index2[ind];
-    sqr2 += old_val * old_val;
-    index2[ind] = cum_pos2;
-    cum_pos2 += old_val;
-
-    old_val = index3[ind];
-    sqr3 += old_val * old_val;
-    index3[ind] = cum_pos3;
-    cum_pos3 += old_val;
-
-    old_val = index4[ind];
-    sqr4 += old_val * old_val;
-    index4[ind] = cum_pos4;
-    cum_pos4 += old_val;
-  }
-
-  // phase 1: sort on byte 1
-
-  int64_t single_bin_size = (int64_t) length * (int64_t) length;
-
-  if (sqr1 != single_bin_size) {
-    for (int pos = 0; pos < length; ++pos) {
-      int value = vec[pos];
-      int target_pos = index1[value & 255]++;
-      buffer[target_pos] = value;
-    }
-  } else {  // a single populated bin
-    memcpy(buffer, vec, length * sizeof(int));
-  }
-
-  // phase 2: sort on byte 2
-
-  if (sqr2 != single_bin_size) {
-    for (int pos = 0; pos < length; ++pos) {
-      int value = buffer[pos];
-      int target_pos = index2[(value >> 8) & 255]++;
-      vec[target_pos] = value;
-    }
-  } else {  // a single populated bin
-    memcpy(vec, buffer, length * sizeof(int));
-  }
-
-  // phase 3: sort on byte 3
-
-  if (sqr3 != single_bin_size) {
-    for (int pos = 0; pos < length; ++pos) {
-      int value = vec[pos];
-      int target_pos = index3[(value >> 16) & 255]++;
-      buffer[target_pos] = value;
-    }
-  } else {  // a single populated bin
-    memcpy(buffer, vec, length * sizeof(int));
-  }
-
-  // phase 4: sort on byte 3
-
-  if (sqr4 != single_bin_size) {
-    for (int pos = 0; pos < length; ++pos) {
-      int value = buffer[pos];
-      int target_pos = index4[((value >> 24) & 255) ^ 128]++;
-      vec[target_pos] = value;
-    }
-  } else {  // a single populated bin
-    memcpy(vec, buffer, length * sizeof(int));
-  }
-}
 
 SEXP fstsort_radix(SEXP int_vec) {
 
@@ -353,7 +88,7 @@ SEXP fstsort_radix(SEXP int_vec) {
   SEXP buffer_vec = PROTECT(Rf_allocVector(INTSXP, length));
   int* buffer = INTEGER(buffer_vec);
 
-  fst_radixsort(vec, length, buffer);
+  fst_radix_sort(vec, length, buffer);
 
   UNPROTECT(1);
 
@@ -378,9 +113,8 @@ SEXP fstsort(SEXP int_vec) {
   }
 
   // take center value as median estimate
-  int piv = (vec[0] + vec[(length - 1) / 2] + vec[length - 1]) / 3;
-  int pivot = (vec[0] + vec[length - 1]) / 2;
-  fst_quicksort(vec, length, pivot);
+  int pivot = (vec[0] + vec[(length - 1) / 2] + vec[length - 1]) / 3;
+  fst_quick_sort(vec, length, pivot);
 
   return int_vec;
 }
