@@ -265,55 +265,83 @@ void fst_radixsort(int* vec, int length, int* buffer)
   index3[0] = 0;
   index4[0] = 0;
 
+  // test for single populated bin
+  int64_t sqr1 = cum_pos1 * cum_pos1;
+  int64_t sqr2 = cum_pos2 * cum_pos2;
+  int64_t sqr3 = cum_pos3 * cum_pos3;
+  int64_t sqr4 = cum_pos4 * cum_pos4;
+
   for (int ind = 1; ind < 256; ++ind) {
 
     int old_val = index1[ind];
+    sqr1 += old_val * old_val;
     index1[ind] = cum_pos1;
     cum_pos1 += old_val;
 
     old_val = index2[ind];
+    sqr2 += old_val * old_val;
     index2[ind] = cum_pos2;
     cum_pos2 += old_val;
 
     old_val = index3[ind];
+    sqr3 += old_val * old_val;
     index3[ind] = cum_pos3;
     cum_pos3 += old_val;
 
     old_val = index4[ind];
+    sqr4 += old_val * old_val;
     index4[ind] = cum_pos4;
     cum_pos4 += old_val;
   }
 
-  // phase 2: sort on byte 1
+  // phase 1: sort on byte 1
 
-  for (int pos = 0; pos < length; ++pos) {
-    int value = vec[pos];
-    int target_pos = index1[value & 255]++;
-    buffer[target_pos] = value;
+  int64_t single_bin_size = (int64_t) length * (int64_t) length;
+
+  if (sqr1 != single_bin_size) {
+    for (int pos = 0; pos < length; ++pos) {
+      int value = vec[pos];
+      int target_pos = index1[value & 255]++;
+      buffer[target_pos] = value;
+    }
+  } else {  // a single populated bin
+    memcpy(buffer, vec, length * sizeof(int));
   }
 
   // phase 2: sort on byte 2
 
-  for (int pos = 0; pos < length; ++pos) {
-    int value = buffer[pos];
-    int target_pos = index2[(value >> 8) & 255]++;
-    vec[target_pos] = value;
+  if (sqr2 != single_bin_size) {
+    for (int pos = 0; pos < length; ++pos) {
+      int value = buffer[pos];
+      int target_pos = index2[(value >> 8) & 255]++;
+      vec[target_pos] = value;
+    }
+  } else {  // a single populated bin
+    memcpy(vec, buffer, length * sizeof(int));
   }
 
   // phase 3: sort on byte 3
 
-  for (int pos = 0; pos < length; ++pos) {
-    int value = vec[pos];
-    int target_pos = index3[(value >> 16) & 255]++;
-    buffer[target_pos] = value;
+  if (sqr3 != single_bin_size) {
+    for (int pos = 0; pos < length; ++pos) {
+      int value = vec[pos];
+      int target_pos = index3[(value >> 16) & 255]++;
+      buffer[target_pos] = value;
+    }
+  } else {  // a single populated bin
+    memcpy(buffer, vec, length * sizeof(int));
   }
 
   // phase 4: sort on byte 3
 
-  for (int pos = 0; pos < length; ++pos) {
-    int value = buffer[pos];
-    int target_pos = index4[((value >> 24) & 255) ^ 128]++;
-    vec[target_pos] = value;
+  if (sqr4 != single_bin_size) {
+    for (int pos = 0; pos < length; ++pos) {
+      int value = buffer[pos];
+      int target_pos = index4[((value >> 24) & 255) ^ 128]++;
+      vec[target_pos] = value;
+    }
+  } else {  // a single populated bin
+    memcpy(vec, buffer, length * sizeof(int));
   }
 }
 
