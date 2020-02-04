@@ -306,18 +306,18 @@ void fst_radixsort(int* vec, int length, int* buffer)
   // count each occurence
   for (int pos = 0; pos < batch_length; ++pos) {
     int ind = 8 * pos;
-    ++index[(buffer[ind] >> 24) & 255];
-    ++index[(buffer[ind + 1] >> 24) & 255];
-    ++index[(buffer[ind + 2] >> 24) & 255];
-    ++index[(buffer[ind + 3] >> 24) & 255];
-    ++index[(buffer[ind + 4] >> 24) & 255];
-    ++index[(buffer[ind + 5] >> 24) & 255];
-    ++index[(buffer[ind + 6] >> 24) & 255];
-    ++index[(buffer[ind + 7] >> 24) & 255];
+    ++index[((buffer[ind] >> 24) & 255) ^ 128];
+    ++index[((buffer[ind + 1] >> 24) & 255) ^ 128];
+    ++index[((buffer[ind + 2] >> 24) & 255) ^ 128];
+    ++index[((buffer[ind + 3] >> 24) & 255) ^ 128];
+    ++index[((buffer[ind + 4] >> 24) & 255) ^ 128];
+    ++index[((buffer[ind + 5] >> 24) & 255) ^ 128];
+    ++index[((buffer[ind + 6] >> 24) & 255) ^ 128];
+    ++index[((buffer[ind + 7] >> 24) & 255) ^ 128];
   }
 
   for (int pos = 8 * batch_length; pos < length; ++pos) {
-    ++index[(buffer[pos] >> 24) & 255];
+    ++index[((buffer[pos] >> 24) & 255) ^ 128];
   }
 
 
@@ -334,7 +334,7 @@ void fst_radixsort(int* vec, int length, int* buffer)
   // count each occurence
   for (int pos = 0; pos < length; ++pos) {
     int value = buffer[pos];
-    int target_pos = index[(value >> 24) & 255]++;
+    int target_pos = index[((value >> 24) & 255) ^ 128]++;
     vec[target_pos] = value;
   }
 
